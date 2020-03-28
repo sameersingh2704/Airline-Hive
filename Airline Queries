@@ -1,0 +1,63 @@
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: AIRLINE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+DATASET LOCATION :
+	/user/edureka_572857/airlines/airports_mod.dat
+	/user/edureka_572857/airlines/Final_airlines
+	/user/edureka_572857/airlines/routes.dat
+
+
+:::::::::: 1. Setting Dynamic Partition On :
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.max.dynamic.partitions=1000;   			
+set hive.exec.max.dynamic.partitions.pernode=1000;
+
+:::::::::: 2. Creating table for airport_mod.dat dataset : 
+
+create table airports_dummy(airport_id smallint, name varchar(50), city varchar(50), country varchar(100), iata_faa char(4), icao char(4), latitude float, longitude float, altitude float, timezone float, dst char(1), tz varchar(100)) row format delimited fields terminated by ',';
+
+load data inpath "/user/edureka_572857/airlines/airports_mod.dat" into table airports_dummy;
+
+create table airports(airport_id smallint, name varchar(50), city varchar(50), iata_faa char(4), icao char(4), latitude float, longitude float, altitude float, timezone float, dst char(1), tz varchar(100)) partitioned by (country varchar(100)) row format delimited fields terminated by ',';
+
+insert into table airports partition(country) select airport_id, name, city, iata_faa, icao, latitude, longitude, altitude, timezone, dst, tz, country from airports_dummy;
+
+:::::::::: 3. Creating table for Final_airline dataset : 
+
+create table airline_dummy(airline_id smallint, name varchar(50), alias varchar(50), iata char(2), icao char(3), callsign varchar(60), country varchar(60), active char(1)) row format delimited fields terminated by ',';
+
+load data inpath "/user/edureka_572857/airlines/Final_airlines" into table airline_dummy;
+
+create table airline(airline_id smallint, name varchar(50), alias varchar(50), iata char(2), icao char(3), callsign varchar(60), active char(1)) partitioned by (country varchar(60)) row format delimited fields terminated by ',';
+
+insert into table airline partition(country) select airline_id, name, alias, iata, icao, callsign, active, country from airline_dummy;
+
+:::::::::: 4. Creating table for routes.dat dataset : 
+
+create table routes_dummy(iata_icao char(3), airline_id smallint,source_code char(4), source_id smallint, destination_code char(4), destination_id smallint, codeshare char(1), stops tinyint, equipments array<char(3)>) row format delimited fields terminated by ',' collection items terminated by ' ';
+
+load data inpath "/user/edureka_572857/airlines/routes.dat" into table routes_dummy;
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: SOLUTIONS ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+select name from airports where country = "India";
+
+select distinct a.name from airline a join routes_dummy b on (a.airline_id = b.airline_id) where b.stops = 0;
+
+select distinct a.name, b.codeshare from airline a join routes_dummy b on (a.airline_id = b.airline_id) where b.codeshare = "Y";
+
+select a.number_of_airports, a.country from (select number_of_airports, country, dense_rank() over (order by number_of_airports desc) as r from (select count(name) as number_of_airports, country from airports group by country) b) a where a.r = 1;
+
+select distinct a.name, b.codeshare from airline a join routes_dummy b on (a.airline_id = b.airline_id) where b.codeshare = "Y";
+
+Practice Query :::::: select max(Number_Of_Airports) from (select count(name) as Number_Of_Airports,country from airports group by country) a; ::::::
+
+Query for distinct unique records :::: 
+
+select * from (select *,dense_rank() over (partition by country order by airport_id desc) as r from airports) a where a.r = 1;
+
+SELECT * from airline at inner join ( select distinct(airline_id) as aid from routes_dummy) rt on at.airline_id=rt.aid where country = 'United States' and active = 'Y';
+
+select count(name), country from airports group by country;
