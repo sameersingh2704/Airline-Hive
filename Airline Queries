@@ -1,17 +1,5 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: AIRLINE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-DATASET LOCATION :
-	/user/edureka_572857/airlines/airports_mod.dat
-	/user/edureka_572857/airlines/Final_airlines
-	/user/edureka_572857/airlines/routes.dat
-
-
-:::::::::: 1. Setting Dynamic Partition On :
-
-set hive.exec.dynamic.partition=true;
-set hive.exec.dynamic.partition.mode=nonstrict;
-set hive.exec.max.dynamic.partitions=1000;   			
-set hive.exec.max.dynamic.partitions.pernode=1000;
 
 :::::::::: 2. Creating table for airport_mod.dat dataset : 
 
